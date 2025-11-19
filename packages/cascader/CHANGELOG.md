@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- 🎉 Initial release of @lume-ui/cascader
+- 🎉 Initial release of @lume98/cascader
 - ✨ Single selection mode
 - ✨ Multiple selection mode
 - 🔍 Built-in search functionality
