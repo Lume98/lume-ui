@@ -1,4 +1,4 @@
-# @lume98/cascader
+# @lume-ui/cascader
 
 一个功能强大的级联选择器组件，基于 React、Radix UI 和 Tailwind CSS 构建。支持单选/多选、搜索、自定义渲染等功能。
 
@@ -18,7 +18,7 @@
 ## 安装
 
 ```bash
-pnpm add @lume98/cascader
+pnpm add @lume-ui/cascader
 ```
 
 ### 依赖
@@ -42,7 +42,7 @@ pnpm add @lume98/cascader
 ### 基础用法
 
 ```tsx
-import { Cascader } from '@lume98/cascader';
+import { Cascader } from '@lume-ui/cascader';
 
 const options = [
   {
@@ -292,7 +292,7 @@ value: string[]  // 例如：['xihu', 'xuanwu']
 
 ```tsx
 import React from 'react';
-import { Cascader } from '@lume98/cascader';
+import { Cascader } from '@lume-ui/cascader';
 
 const regionOptions = [
   {
@@ -364,7 +364,7 @@ export default function RegionSelector() {
 
 1. **value 类型**：确保传入的 `value` 类型与 `multiple` 和 `showFullPath` 设置相匹配
 2. **性能**：对于大量数据，建议使用虚拟滚动或分页加载
-3. **样式导入**：样式会自动导入，如需单独导入：`import '@lume98/cascader/styles.css'`
+3. **样式导入**：样式会自动导入，如需单独导入：`import '@lume-ui/cascader/styles.css'`
 
 ## 许可证
 

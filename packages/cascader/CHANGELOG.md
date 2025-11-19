@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- 🎉 Initial release of @lume98/cascader
+- 🎉 Initial release of @lume-ui/cascader
 - ✨ Single selection mode
 - ✨ Multiple selection mode
 - 🔍 Built-in search functionality
@@ -39,4 +39,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - lucide-react ^0.468.0
 - tailwind-merge ^2.6.0
 
-[0.1.0]: https://github.com/Lume98/shadcn-cascader/releases/tag/v0.1.0
+[0.1.0]: https://github.com/Lume98/shadcn-cascader/releases/tag/@lume-ui/cascader@0.1.0

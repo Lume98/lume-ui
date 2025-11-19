@@ -1,5 +1,5 @@
 {
-    "name": "@lume98/cascader",
+    "name": "@lume-ui/cascader",
     "version": "0.1.0",
     "description": "A powerful cascading selector component built with React, Radix UI, and Tailwind CSS. Supports single/multiple selection, search, and custom rendering.",
     "files": [
