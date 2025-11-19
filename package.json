@@ -1,0 +1,23 @@
+{
+    "name": "lume-ui",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Monorepo for lume-ui component",
+    "scripts": {
+        "dev": "pnpm --filter examples dev",
+        "build": "pnpm --filter lume-ui build",
+        "build:demo": "pnpm --filter examples build",
+        "lint": "pnpm -r lint",
+        "type-check": "pnpm -r type-check",
+        "clean": "pnpm -r clean"
+    },
+    "devDependencies": {
+        "@types/node": "^20.10.0",
+        "typescript": "^5.3.3"
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "pnpm": ">=8.0.0"
+    },
+    "packageManager": "pnpm@8.15.0"
+}

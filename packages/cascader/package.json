@@ -1,0 +1,81 @@
+{
+    "name": "@lume-ui/cascader",
+    "version": "0.1.0",
+    "description": "A powerful cascading selector component built with React, Radix UI, and Tailwind CSS. Supports single/multiple selection, search, and custom rendering.",
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "main": "dist/index.js",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "sideEffects": [
+        "*.css"
+    ],
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./dist/index.d.mts",
+                "default": "./dist/index.mjs"
+            },
+            "require": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            }
+        },
+        "./styles.css": "./dist/styles.css"
+    },
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "react",
+        "cascader",
+        "cascade",
+        "select",
+        "picker",
+        "component",
+        "ui",
+        "lume-ui",
+        "radix-ui",
+        "tailwind",
+        "tailwindcss",
+        "typescript"
+    ],
+    "author": "Lume UI",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Lume98/shadcn-cascader.git",
+        "directory": "packages/cascader"
+    },
+    "homepage": "https://github.com/Lume98/shadcn-cascader#readme",
+    "bugs": {
+        "url": "https://github.com/Lume98/shadcn-cascader/issues"
+    },
+    "peerDependencies": {
+        "react": "^18.0.0 || ^19.0.0",
+        "react-dom": "^18.0.0 || ^19.0.0"
+    },
+    "dependencies": {
+        "@radix-ui/react-checkbox": "^1.3.3",
+        "@radix-ui/react-popover": "^1.1.15",
+        "@radix-ui/react-scroll-area": "^1.2.10",
+        "@radix-ui/react-slot": "^1.2.4",
+        "clsx": "^2.1.1",
+        "lucide-react": "^0.468.0",
+        "tailwind-merge": "^2.6.0"
+    },
+    "devDependencies": {
+        "@tailwindcss/postcss": "^4",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "postcss": "^8.4.49",
+        "tailwindcss": "^4",
+        "tsup": "^8.5.1",
+        "tw-animate-css": "^1.4.0",
+        "typescript": "^5.3.3"
+    }
+}
