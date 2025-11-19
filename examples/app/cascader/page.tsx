@@ -168,6 +168,21 @@ export default function Page() {
       </div>
 
       <div className="space-y-8">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold mb-2">单选模式</h2>
+            <p className="text-sm text-muted-foreground">
+              数据为空
+            </p>
+          </div>
+          <Cascader
+            options={[]}
+            value={value1}
+            placeholder="请选择地区"
+            className="w-[400px]"
+          />
+        </div>
+
         {/* 示例 1: 单选模式 */}
         <div className="space-y-4">
           <div>

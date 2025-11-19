@@ -1,0 +1,85 @@
+import { CascaderOption } from '../cascader';
+
+interface FilterPathsProps {
+  selectedPaths: string[][];
+  multiple: boolean;
+  checkStrictly: boolean;
+  showCheckedStrategy: 'all' | 'parent' | 'child';
+  selectedValues: Set<string>;
+  findOptionPath: (value: string) => CascaderOption[] | null;
+  collectChildValues: (option: CascaderOption) => string[];
+}
+
+export const filterPaths = (props: FilterPathsProps) => {
+  const {
+    selectedPaths,
+    multiple,
+    checkStrictly,
+    showCheckedStrategy,
+    selectedValues,
+    findOptionPath,
+    collectChildValues,
+  } = props;
+
+  if (!multiple || checkStrictly || showCheckedStrategy === 'all') {
+    return selectedPaths;
+  }
+
+  if (showCheckedStrategy === 'child') {
+    // 只显示叶子节点
+    return selectedPaths.filter(path => {
+      const lastValue = path[path.length - 1];
+      const optionPath = findOptionPath(lastValue);
+      if (!optionPath) return false;
+      const lastOption = optionPath[optionPath.length - 1];
+      return !lastOption.children || lastOption.children.length === 0;
+    });
+  }
+
+  if (showCheckedStrategy === 'parent') {
+    // 只显示父节点（如果所有子节点都被选中）
+    const pathsToShow: string[][] = [];
+    const processedValues = new Set<string>();
+
+    // 按路径长度从短到长排序，优先处理父节点
+    const sortedPaths = [...selectedPaths].sort((a, b) => a.length - b.length);
+
+    for (const path of sortedPaths) {
+      const lastValue = path[path.length - 1];
+      if (processedValues.has(lastValue)) continue;
+
+      const optionPath = findOptionPath(lastValue);
+      if (!optionPath) continue;
+
+      const option = optionPath[optionPath.length - 1];
+
+      if (option.children && option.children.length > 0) {
+        // 检查是否所有子节点都被选中
+        const allChildValues = collectChildValues(option);
+        const allSelected = allChildValues.every(v => selectedValues.has(v));
+
+        if (allSelected) {
+          // 所有子节点都被选中，只显示父节点
+          pathsToShow.push(path);
+          allChildValues.forEach(v => processedValues.add(v));
+        } else {
+          // 部分子节点被选中，显示被选中的子节点
+          if (selectedValues.has(lastValue)) {
+            pathsToShow.push(path);
+            processedValues.add(lastValue);
+          }
+        }
+      } else {
+        // 叶子节点，直接显示
+        if (selectedValues.has(lastValue)) {
+          pathsToShow.push(path);
+          processedValues.add(lastValue);
+        }
+      }
+    }
+
+    return pathsToShow;
+  }
+
+  return selectedPaths;
+};
