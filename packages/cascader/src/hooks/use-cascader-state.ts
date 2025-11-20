@@ -1,4 +1,4 @@
-import { CascaderOption } from '@/components/cascader';
+import { CascaderOption, CascaderProps } from '@/components/cascader';
 import { findPathByValues } from '@/lib/find-path-by-values';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useImmerReducer } from 'use-immer';
@@ -9,6 +9,7 @@ type State = {
   values: Set<string>;
   hoverPath: CascaderOption[];
 };
+
 const initialState: State = {
   path: [],
   paths: [],
@@ -40,19 +41,12 @@ const reducer = (draft: State, action: Action) => {
   return draft;
 };
 
-interface UseSelectedProps {
-  options: CascaderOption[];
-  multiple: boolean;
-  emitPath: boolean;
-  value?: string[] | string[][] | string;
-}
-
-const useSelected = ({
+const useCascaderState = ({
   options,
   multiple,
   emitPath,
   value,
-}: UseSelectedProps) => {
+}: Pick<CascaderProps, 'options' | 'multiple' | 'emitPath' | 'value'>) => {
   const [state, dispatch] = useImmerReducer<State, Action>(
     reducer,
     initialState
@@ -162,4 +156,4 @@ const useSelected = ({
   return { state, dispatch, findOptionPath };
 };
 
-export default useSelected;
+export default useCascaderState;

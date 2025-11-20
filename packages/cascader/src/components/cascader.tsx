@@ -24,7 +24,7 @@ import { getPathLabels } from '@/lib/get-path-labels';
 import { getDisplayTags } from '@/lib/get-display-tags';
 import { handleMultipleSelect as handleMultipleSelectUtil } from '@/lib/handle-multiple-select';
 import { handleRemoveTag as handleRemoveTagUtil } from '@/lib/handle-remove-tag';
-import useSelected from '@/hooks/use-selected';
+import useCascaderState from '@/hooks/use-cascader-state';
 import { collectChildValues } from '@/lib/collect-child-values';
 import { useIndeterminateMap } from '@/hooks/use-indeterminate';
 
@@ -77,7 +77,7 @@ export function Cascader({
   showAllPaths = false,
 }: CascaderProps) {
   const [open, setOpen] = React.useState(false);
-  const { state, dispatch, findOptionPath } = useSelected({
+  const { state, dispatch, findOptionPath } = useCascaderState({
     options,
     multiple,
     emitPath,

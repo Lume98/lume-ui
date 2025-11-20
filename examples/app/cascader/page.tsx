@@ -161,7 +161,7 @@ export default function Page() {
     <div className="container mx-auto p-8 space-y-8">
       <div className="space-y-4">
         <h1 className="text-3xl font-bold">Cascader 级联选择器</h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foregrou nd">
           基于 shadcn UI
           构建的级联选择组件，支持单选、多选、父子关联和父子不关联等多种模式
         </p>
