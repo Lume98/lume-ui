@@ -22,8 +22,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "vite build",
+    "dev": "vite build --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -48,9 +48,11 @@
     "@tailwindcss/postcss": "^4",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.7.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^4",
-    "tsup": "^8.5.1",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vite": "^6.4.1",
+    "vite-plugin-dts": "^4.5.4"
   }
 }

@@ -17,8 +17,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { filterPaths } from '@/lib/filter-paths';
-import { generatePanels } from '@/lib/generate-panels';
+import { generatePanels } from '@/lib/panels';
 import { getDisplayText } from '@/lib/get-display-text';
 import { getPathLabels } from '@/lib/get-path-labels';
 import { getDisplayTags } from '@/lib/get-display-tags';
@@ -27,6 +26,7 @@ import { handleRemoveTag as handleRemoveTagUtil } from '@/lib/handle-remove-tag'
 import useCascaderState from '@/hooks/use-cascader-state';
 import { collectChildValues } from '@/lib/collect-child-values';
 import { useIndeterminateMap } from '@/hooks/use-indeterminate';
+import { filterPaths } from '@/lib/path';
 
 export interface CascaderOption {
   label: string;
@@ -84,6 +84,12 @@ export function Cascader({
     value,
   });
 
+  React.useEffect(() => {
+    console.log("paths", state.paths);
+    console.log("values", state.values);
+    console.log("hoverPath", state.hoverPath);
+  }, [state]);
+
   // 单选时的显示文本
   const displayText = React.useMemo(() => {
     if (multiple) {
@@ -111,29 +117,22 @@ export function Cascader({
   const handleMultipleSelectClick = (option: CascaderOption, level: number) => {
     if (option.disabled) return;
 
-    const {
-      newSelectedValues,
-      newSelectedPaths,
-      returnValue,
-      selectedOptions,
-    } = handleMultipleSelectUtil({
+    const { returnValue, selectedOptions } = handleMultipleSelectUtil({
       option,
       level,
-      hoverPath: state.hoverPath,
-      selectedValues: state.values,
-      selectedPaths: state.paths,
       checkStrictly,
       emitPath,
+      state,
+      dispatch,
       findOptionPath,
     });
-    dispatch({ type: 'updateValues', payload: newSelectedValues });
-    dispatch({ type: 'updatePaths', payload: newSelectedPaths });
+
     onChange?.(returnValue, selectedOptions);
   };
 
   // 处理单选
   const handleSelect = (option: CascaderOption, level: number) => {
-    // 更新 hover path
+    // 构建路径
     const newPath = [...state.hoverPath.slice(0, level), option];
 
     if (option.disabled) return;
@@ -144,24 +143,24 @@ export function Cascader({
       if (option.children && option.children.length > 0) {
         dispatch({ type: 'updateHoverPath', payload: newPath });
       }
+      return;
+    }
+    // 单选模式
+    const hasChildren = option.children && option.children.length > 0;
+    // checkStrictly=true 时，可以选择任意层级
+    // checkStrictly=false 时，只能选择叶子节点
+    if (hasChildren && !checkStrictly) {
+      // 有子选项且父子关联，只更新 hover path, 目的是展开子选项
+      dispatch({ type: 'updateHoverPath', payload: newPath });
     } else {
-      // 单选模式
-      const hasChildren = option.children && option.children.length > 0;
-
-      // checkStrictly=true 时，可以选择任意层级
-      // checkStrictly=false 时，只能选择叶子节点
-      if (hasChildren && !checkStrictly) {
-        // 有子选项且父子关联，只更新 hover path
-        dispatch({ type: 'updateHoverPath', payload: newPath });
-      } else {
-        // 可以选择：叶子节点 或 checkStrictly=true 时的任意节点
-        dispatch({ type: 'updatePath', payload: newPath });
-        const values = newPath.map(item => item.value);
-        const returnValue = emitPath ? values : values[values.length - 1];
-        onChange?.(returnValue, newPath[newPath.length - 1]);
-        setOpen(false);
-        dispatch({ type: 'updateHoverPath', payload: [] });
-      }
+      // 可以选择：叶子节点 或 checkStrictly=true 时的任意节点
+      dispatch({ type: 'updatePath', payload: newPath });
+      const values = newPath.map(item => item.value);
+      // 根据 emitPath 返回不同格式的值
+      const returnValue = emitPath ? values : values[values.length - 1];
+      onChange?.(returnValue, newPath[newPath.length - 1]);
+      setOpen(false);
+      dispatch({ type: 'updateHoverPath', payload: [] });
     }
   };
 
@@ -176,14 +175,11 @@ export function Cascader({
   // 当 popover 打开时，初始化 state.hoverPath
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
-    if (newOpen) {
-      dispatch({
-        type: 'updateHoverPath',
-        payload: multiple ? [] : state.path,
-      });
-    } else {
-      dispatch({ type: 'updateHoverPath', payload: [] });
-    }
+    const payload = (multiple && newOpen) || !newOpen ? [] : state.path;
+    dispatch({
+      type: 'updateHoverPath',
+      payload: payload,
+    });
   };
 
   // 移除单个选中项（多选模式）

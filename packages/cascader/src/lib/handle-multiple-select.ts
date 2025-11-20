@@ -1,20 +1,19 @@
-import { CascaderOption } from '@/components/cascader';
+import { CascaderOption, CascaderProps } from '@/components/cascader';
+import { CascaderAction, CascaderState } from '@/hooks/use-cascader-state';
 import { collectChildValues } from '@/lib/collect-child-values';
 
-interface HandleMultipleSelectParams {
-  option: CascaderOption;
+type HandleMultipleSelectProps = Pick<
+  CascaderProps,
+  'checkStrictly' | 'emitPath'
+> & {
   level: number;
-  hoverPath: CascaderOption[];
-  selectedValues: Set<string>;
-  selectedPaths: string[][];
-  checkStrictly: boolean;
-  emitPath: boolean;
+  option: CascaderOption;
+  state: CascaderState;
+  dispatch: (action: CascaderAction) => void;
   findOptionPath: (value: string) => CascaderOption[] | null;
-}
+};
 
 interface HandleMultipleSelectResult {
-  newSelectedValues: Set<string>;
-  newSelectedPaths: string[][];
   returnValue: string[] | string[][];
   selectedOptions: CascaderOption[];
 }
@@ -22,32 +21,31 @@ interface HandleMultipleSelectResult {
 /**
  * 处理多选逻辑
  */
-export const handleMultipleSelect = (
-  params: HandleMultipleSelectParams
-): HandleMultipleSelectResult => {
-  const {
-    option,
-    level,
-    hoverPath,
-    selectedValues,
-    selectedPaths,
-    checkStrictly,
-    emitPath,
-    findOptionPath,
-  } = params;
-
+export const handleMultipleSelect = ({
+  option,
+  level,
+  checkStrictly,
+  emitPath,
+  dispatch,
+  state,
+  findOptionPath,
+}: HandleMultipleSelectProps): HandleMultipleSelectResult => {
+  const selectedPaths = state.paths;
   if (option.disabled) {
     return {
-      newSelectedValues: selectedValues,
-      newSelectedPaths: selectedPaths,
       returnValue: emitPath
         ? selectedPaths
         : selectedPaths.map(p => p[p.length - 1]),
       selectedOptions: [],
     };
   }
+
+  const hoverPath = state.hoverPath;
+  const selectedValues = state.values;
+
   // 当前的路径 A>B>C
   const currentPath = [...hoverPath.slice(0, level), option];
+
   const pathValues = currentPath.map(p => p.value);
   const optionValue = option.value;
 
@@ -111,9 +109,10 @@ export const handleMultipleSelect = (
     })
     .filter(Boolean) as CascaderOption[];
 
+  // 更新状态
+  dispatch({ type: 'updateValues', payload: newSelectedValues });
+  dispatch({ type: 'updatePaths', payload: newSelectedPaths });
   return {
-    newSelectedValues,
-    newSelectedPaths,
     returnValue,
     selectedOptions,
   };

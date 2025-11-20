@@ -1,49 +1,50 @@
 # Dependencies
-node_modules
-.pnp
-.pnp.js
+node_modules/
+.pnpm-store/
 
-# Testing
-coverage
-
-# Production
-dist
-build
+# Build output
+dist/
+build/
 *.tsbuildinfo
 
-# Next.js
-.next
-out
-
-# Misc
-.DS_Store
-*.pem
-
-# Debug
+# Logs
+logs
+*.log
 npm-debug.log*
+pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-# Local env files
+# Environment variables
 .env
-.env*.local
+.env.local
+.env.*.local
 
-# Vercel
-.vercel
+# Editor directories and files
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# Turbo
-.turbo
+# Testing
+coverage/
+.nyc_output/
 
-# IDE
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.swp
-*.swo
-*~
+# Temporary files
+*.tmp
+.temp/
+.cache/
 
-# OS
+# Next.js
+.next/
+out/
+
+# TypeScript
+*.tsbuildinfo
+
+# OS files
 Thumbs.db
-

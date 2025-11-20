@@ -1,29 +1,29 @@
 import { CascaderOption, CascaderProps } from '@/components/cascader';
-import { findPathByValues } from '@/lib/find-path-by-values';
-import { useCallback, useEffect, useMemo } from 'react';
+import { findOptionPath, findPathByValues } from '@/lib/path';
+import { useCallback, useEffect } from 'react';
 import { useImmerReducer } from 'use-immer';
 
-type State = {
+export type CascaderState = {
   path: CascaderOption[];
   paths: string[][];
   values: Set<string>;
   hoverPath: CascaderOption[];
 };
 
-const initialState: State = {
+const initialState: CascaderState = {
   path: [],
   paths: [],
   values: new Set(),
   hoverPath: [],
 };
 
-type Action =
+export type CascaderAction =
   | { type: 'updatePaths'; payload: string[][] }
   | { type: 'updateValues'; payload: Set<string> }
   | { type: 'updatePath'; payload: CascaderOption[] }
   | { type: 'updateHoverPath'; payload: CascaderOption[] };
 
-const reducer = (draft: State, action: Action) => {
+const reducer = (draft: CascaderState, action: CascaderAction) => {
   switch (action.type) {
     case 'updatePaths':
       draft.paths = action.payload;
@@ -38,7 +38,6 @@ const reducer = (draft: State, action: Action) => {
       draft.hoverPath = action.payload;
       break;
   }
-  return draft;
 };
 
 const useCascaderState = ({
@@ -47,113 +46,52 @@ const useCascaderState = ({
   emitPath,
   value,
 }: Pick<CascaderProps, 'options' | 'multiple' | 'emitPath' | 'value'>) => {
-  const [state, dispatch] = useImmerReducer<State, Action>(
+  const [state, dispatch] = useImmerReducer<CascaderState, CascaderAction>(
     reducer,
     initialState
   );
 
-  // 根据模式确定合适的默认值
-  const normalizedValue = useMemo(() => {
-    if (value !== undefined) return value;
-    if (multiple) {
-      return emitPath ? [] : [];
-    } else {
-      return emitPath ? [] : '';
-    }
-  }, [value, multiple, emitPath]);
-
-  const findOptionPath = useCallback(
-    (targetValue: string): CascaderOption[] | null => {
-      function findPath(
-        opts: CascaderOption[],
-        path: CascaderOption[] = []
-      ): CascaderOption[] | null {
-        for (const opt of opts) {
-          const currentPath = [...path, opt];
-          if (opt.value === targetValue) {
-            return currentPath;
-          }
-          if (opt.children) {
-            const found = findPath(opt.children, currentPath);
-            if (found) return found;
-          }
-        }
-        return null;
-      }
-      return findPath(options);
-    },
+  // 创建 findOptionPath 的绑定版本
+  const findOptionPathByValue = useCallback(
+    (targetValue: string) => findOptionPath(options, targetValue),
     [options]
   );
 
   // 根据 value 初始化状态
   useEffect(() => {
+    // 根据模式确定合适的默认值
+    const normalizedValue = value ?? (multiple ? [] : emitPath ? [] : '');
     if (multiple) {
-      // 多选模式
+      const vals = normalizedValue as string[] | string[][];
       if (emitPath) {
-        const vals = normalizedValue as string[][];
-        if (vals.length > 0) {
-          // 收集所有选中的值（仅叶子节点）
-          const flatValues = new Set<string>();
-          vals.forEach(path => {
-            // 只添加叶子节点的值
-            flatValues.add(path[path.length - 1]);
-          });
-          dispatch({ type: 'updatePaths', payload: vals });
-          dispatch({ type: 'updateValues', payload: flatValues });
-        } else {
-          dispatch({ type: 'updatePaths', payload: [] });
-          dispatch({ type: 'updateValues', payload: new Set() });
-        }
+        const paths = (vals as string[][]) || [];
+        const values = new Set(paths.map(p => p[p.length - 1]));
+        dispatch({ type: 'updatePaths', payload: paths });
+        dispatch({ type: 'updateValues', payload: values });
       } else {
-        // 只有最后节点值
-        const vals = normalizedValue as string[];
-        if (vals.length > 0) {
-          const paths: string[][] = [];
-          const valuesSet = new Set<string>();
-          vals.forEach(val => {
-            const path = findOptionPath(val);
-            if (path) {
-              const pathValues = path.map(p => p.value);
-              paths.push(pathValues);
-              // 只添加叶子节点的值
-              valuesSet.add(val);
-            }
-          });
-          dispatch({ type: 'updatePaths', payload: paths });
-          dispatch({ type: 'updateValues', payload: valuesSet });
-        } else {
-          dispatch({ type: 'updatePaths', payload: [] });
-          dispatch({ type: 'updateValues', payload: new Set() });
-        }
+        const values = (vals as string[]) || [];
+        const paths = values
+          .map(v => findOptionPathByValue(v))
+          .filter((p): p is CascaderOption[] => p !== null)
+          .map(p => p.map(o => o.value));
+        dispatch({ type: 'updatePaths', payload: paths });
+        dispatch({ type: 'updateValues', payload: new Set(values) });
       }
     } else {
-      // 单选模式
       if (emitPath) {
-        const vals = normalizedValue as string[];
-        if (vals.length > 0) {
-          const path = findPathByValues(options, vals);
-          if (path) {
-            dispatch({ type: 'updatePath', payload: path });
-          }
-        } else {
-          dispatch({ type: 'updatePaths', payload: [] });
-        }
+        const pathValues = (normalizedValue as string[]) || [];
+        const path =
+          pathValues.length > 0 ? findPathByValues(options, pathValues) : null;
+        dispatch({ type: 'updatePath', payload: path || [] });
       } else {
-        // 只有最后节点值
-        const val = normalizedValue as string;
-        if (val) {
-          const path = findOptionPath(val);
-          if (path) {
-            dispatch({ type: 'updatePath', payload: path });
-          }
-        } else {
-          dispatch({ type: 'updatePath', payload: [] });
-        }
+        const value = (normalizedValue as string) || '';
+        const path = value ? findOptionPathByValue(value) : null;
+        dispatch({ type: 'updatePath', payload: path || [] });
       }
     }
-  }, [normalizedValue, options, multiple, emitPath, findOptionPath]);
+  }, [multiple, emitPath, options, findOptionPathByValue, dispatch]);
 
-  return { state, dispatch, findOptionPath };
+  return { state, dispatch, findOptionPath: findOptionPathByValue };
 };
 
 export default useCascaderState;

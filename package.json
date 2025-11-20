@@ -2,17 +2,40 @@
     "name": "lume-ui",
     "version": "0.0.0",
     "private": true,
-    "description": "Monorepo for lume-ui component",
+    "description": "A modern React UI component library monorepo, inspired by Element Plus",
+    "author": "Lume UI Team",
+    "license": "MIT",
+    "homepage": "https://github.com/Lume98/shadcn-cascader#readme",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Lume98/shadcn-cascader.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Lume98/shadcn-cascader/issues"
+    },
+    "keywords": [
+        "react",
+        "ui",
+        "component-library",
+        "monorepo",
+        "typescript",
+        "tailwindcss",
+        "radix-ui"
+    ],
     "scripts": {
-        "dev": "pnpm --filter examples dev",
-        "build": "pnpm --filter lume-ui build",
-        "build:demo": "pnpm --filter examples build",
+        "dev": "pnpm --filter play dev",
+        "build": "pnpm --filter '@lume-ui/*' build",
+        "build:play": "pnpm --filter play build",
+        "build:all": "pnpm tsx scripts/build.ts",
+        "release": "pnpm tsx scripts/release.ts",
+        "release:dry": "pnpm tsx scripts/release.ts --dry-run",
         "lint": "pnpm -r lint",
         "type-check": "pnpm -r type-check",
-        "clean": "pnpm -r clean"
+        "clean": "pnpm -r exec rm -rf dist node_modules"
     },
     "devDependencies": {
         "@types/node": "^20",
+        "tsx": "^4.0.0",
         "typescript": "^5.3.3"
     },
     "engines": {

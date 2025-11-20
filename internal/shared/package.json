@@ -1,0 +1,16 @@
+{
+    "name": "@lume-ui/shared",
+    "version": "1.0.0",
+    "description": "Shared types and utilities for Lume UI",
+    "private": true,
+    "main": "index.ts",
+    "files": [],
+    "scripts": {},
+    "keywords": [
+        "types",
+        "utils",
+        "shared"
+    ],
+    "author": "Lume UI Team",
+    "license": "MIT"
+}

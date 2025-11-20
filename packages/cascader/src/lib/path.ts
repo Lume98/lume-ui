@@ -1,15 +1,71 @@
-import { CascaderOption } from '@/components/cascader';
+import { CascaderOption, CascaderProps } from '@/components/cascader';
 
-interface FilterPathsProps {
+/**
+ * 根据单个值查找对应的路径
+ * @param options - 选项数据
+ * @param targetValue - 目标值
+ * @returns 路径数组或 null
+ */
+export const findOptionPath = (
+  options: CascaderOption[],
+  targetValue: string
+): CascaderOption[] | null => {
+  function findPath(
+    opts: CascaderOption[],
+    path: CascaderOption[] = []
+  ): CascaderOption[] | null {
+    for (const opt of opts) {
+      const currentPath = [...path, opt];
+      if (opt.value === targetValue) {
+        return currentPath;
+      }
+      if (opt.children) {
+        const found = findPath(opt.children, currentPath);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+  return findPath(options);
+};
+
+/**
+ * 根据路径值数组查找对应的路径
+ * @param opts - 选项数据
+ * @param values - 路径值数组
+ * @returns 路径数组或 null
+ */
+export const findPathByValues = (
+  opts: CascaderOption[],
+  values: string[]
+): CascaderOption[] | null => {
+  if (values.length === 0) return null;
+
+  for (const opt of opts) {
+    if (opt.value === values[0]) {
+      if (values.length === 1) {
+        return [opt];
+      }
+      if (opt.children) {
+        const childPath = findPathByValues(opt.children, values.slice(1));
+        if (childPath) {
+          return [opt, ...childPath];
+        }
+      }
+    }
+  }
+  return null;
+};
+
+type FilterPathsProps = Pick<
+  CascaderProps,
+  'multiple' | 'checkStrictly' | 'showCheckedStrategy'
+> & {
   selectedPaths: string[][];
-  multiple: boolean;
-  checkStrictly: boolean;
-  showCheckedStrategy: 'all' | 'parent' | 'child';
   selectedValues: Set<string>;
   findOptionPath: (value: string) => CascaderOption[] | null;
   collectChildValues: (option: CascaderOption) => string[];
-}
-
+};
 export const filterPaths = (props: FilterPathsProps) => {
   const {
     selectedPaths,
