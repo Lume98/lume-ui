@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { filterPaths } from './utils';
 import useSelected from '@/hooks/use-selected';
 import { collectChildValues } from '@/lib/collect-child-values';
+import { useIndeterminateMap } from '@/hooks/use-indeterminate';
 
 export interface CascaderOption {
   label: string;
@@ -107,41 +108,12 @@ export function Cascader({
     return result;
   }, [options, state.hoverPath, state.path, open]);
 
-  // 计算所有选项的半选状态（优化性能）
-  const indeterminateMap = React.useMemo(() => {
-    if (!multiple || checkStrictly) return new Map<string, boolean>();
-
-    const map = new Map<string, boolean>();
-
-    function checkIndeterminate(option: CascaderOption): boolean {
-      if (!option.children || option.children.length === 0) {
-        return false;
-      }
-
-      const allChildValues = collectChildValues(option);
-      const checkedCount = allChildValues.filter(v =>
-        state.values.has(v)
-      ).length;
-
-      const isIndeterminate =
-        checkedCount > 0 && checkedCount < allChildValues.length;
-      map.set(option.value, isIndeterminate);
-
-      return isIndeterminate;
-    }
-
-    function traverse(opts: CascaderOption[]) {
-      opts.forEach(opt => {
-        checkIndeterminate(opt);
-        if (opt.children) {
-          traverse(opt.children);
-        }
-      });
-    }
-
-    traverse(options);
-    return map;
-  }, [options, state.values, multiple, checkStrictly, collectChildValues]);
+  const indeterminateMap = useIndeterminateMap({
+    options,
+    values: state.values,
+    multiple,
+    checkStrictly,
+  });
 
   // 处理多选
   const handleMultipleSelect = (option: CascaderOption, level: number) => {
