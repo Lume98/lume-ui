@@ -223,6 +223,7 @@ export default function Page() {
           <Cascader
             options={options}
             value={value3}
+            showCheckedStrategy="parent"
             onChange={(values, selectedOptions) => {
               setValue3(values as string[][]);
               console.log('选中的值:', values);

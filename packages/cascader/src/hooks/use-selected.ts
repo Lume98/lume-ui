@@ -43,14 +43,14 @@ const reducer = (draft: State, action: Action) => {
 interface UseSelectedProps {
   options: CascaderOption[];
   multiple: boolean;
-  showFullPath: boolean;
+  emitPath: boolean;
   value?: string[] | string[][] | string;
 }
 
 const useSelected = ({
   options,
   multiple,
-  showFullPath,
+  emitPath,
   value,
 }: UseSelectedProps) => {
   const [state, dispatch] = useImmerReducer<State, Action>(
@@ -62,11 +62,11 @@ const useSelected = ({
   const normalizedValue = useMemo(() => {
     if (value !== undefined) return value;
     if (multiple) {
-      return showFullPath ? [] : [];
+      return emitPath ? [] : [];
     } else {
-      return showFullPath ? [] : '';
+      return emitPath ? [] : '';
     }
-  }, [value, multiple, showFullPath]);
+  }, [value, multiple, emitPath]);
 
   const findOptionPath = useCallback(
     (targetValue: string): CascaderOption[] | null => {
@@ -95,7 +95,7 @@ const useSelected = ({
   useEffect(() => {
     if (multiple) {
       // 多选模式
-      if (showFullPath) {
+      if (emitPath) {
         const vals = normalizedValue as string[][];
         if (vals.length > 0) {
           // 收集所有选中的值（仅叶子节点）
@@ -134,7 +134,7 @@ const useSelected = ({
       }
     } else {
       // 单选模式
-      if (showFullPath) {
+      if (emitPath) {
         const vals = normalizedValue as string[];
         if (vals.length > 0) {
           const path = findPathByValues(options, vals);
@@ -157,7 +157,7 @@ const useSelected = ({
         }
       }
     }
-  }, [normalizedValue, options, multiple, showFullPath, findOptionPath]);
+  }, [normalizedValue, options, multiple, emitPath, findOptionPath]);
 
   return { state, dispatch, findOptionPath };
 };

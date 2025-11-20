@@ -1,4 +1,4 @@
-import { CascaderOption } from '../cascader';
+import { CascaderOption } from '@/components/cascader';
 
 interface FilterPathsProps {
   selectedPaths: string[][];
@@ -20,13 +20,12 @@ export const filterPaths = (props: FilterPathsProps) => {
     findOptionPath,
     collectChildValues,
   } = props;
-
+  // 如果是单选或 checkStrictly 为 true 或 showCheckedStrategy 为 'all'，则返回所有选中项的路径
   if (!multiple || checkStrictly || showCheckedStrategy === 'all') {
     return selectedPaths;
   }
-
+  // 如果 showCheckedStrategy 为 'child'，则返回所有叶子节点，不包含父节点
   if (showCheckedStrategy === 'child') {
-    // 只显示叶子节点
     return selectedPaths.filter(path => {
       const lastValue = path[path.length - 1];
       const optionPath = findOptionPath(lastValue);
@@ -35,9 +34,8 @@ export const filterPaths = (props: FilterPathsProps) => {
       return !lastOption.children || lastOption.children.length === 0;
     });
   }
-
+  // 只显示父节点（如果所有子节点都被选中）
   if (showCheckedStrategy === 'parent') {
-    // 只显示父节点（如果所有子节点都被选中）
     const pathsToShow: string[][] = [];
     const processedValues = new Set<string>();
 

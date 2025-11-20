@@ -17,7 +17,13 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { filterPaths } from './utils';
+import { filterPaths } from '@/lib/filter-paths';
+import { generatePanels } from '@/lib/generate-panels';
+import { getDisplayText } from '@/lib/get-display-text';
+import { getPathLabels } from '@/lib/get-path-labels';
+import { getDisplayTags } from '@/lib/get-display-tags';
+import { handleMultipleSelect as handleMultipleSelectUtil } from '@/lib/handle-multiple-select';
+import { handleRemoveTag as handleRemoveTagUtil } from '@/lib/handle-remove-tag';
 import useSelected from '@/hooks/use-selected';
 import { collectChildValues } from '@/lib/collect-child-values';
 import { useIndeterminateMap } from '@/hooks/use-indeterminate';
@@ -40,12 +46,19 @@ export interface CascaderProps {
   className?: string;
   disabled?: boolean;
   multiple?: boolean;
-  checkStrictly?: boolean;
   showCheckedStrategy?: 'all' | 'parent' | 'child';
+
+  /** 多选模式下最多显示Tag的数量，超过这个数量则折叠Tag，显示省略号+剩余数量	 */
   maxTagCount?: number;
+  /** 当折叠 Tag 的时候，自定义显示最大数量的占位内容 */
   maxTagPlaceholder?: (omittedCount: number) => React.ReactNode;
-  /** 是否返回完整路径，false 时只返回最后一个节点的值 */
-  showFullPath?: boolean;
+
+  /** 在选中节点改变时，是否返回由该节点所在的各级菜单的值所组成的数组，若设置 false，则只返回该节点的值 */
+  emitPath?: boolean;
+  /* 是否严格的遵守父子节点不互相关联	 */
+  checkStrictly?: boolean;
+  /* 输入框中是否显示选中值的完整路径	 */
+  showAllPaths?: boolean;
 }
 
 export function Cascader({
@@ -60,23 +73,16 @@ export function Cascader({
   showCheckedStrategy = 'all',
   maxTagCount,
   maxTagPlaceholder,
-  showFullPath = true,
+  emitPath = true,
+  showAllPaths = false,
 }: CascaderProps) {
   const [open, setOpen] = React.useState(false);
   const { state, dispatch, findOptionPath } = useSelected({
     options,
     multiple,
-    showFullPath,
+    emitPath,
     value,
   });
-
-  // 收集所有父节点的值
-  // const getParentValues = React.useCallback(
-  //   (path: CascaderOption[]): string[] => {
-  //     return path.slice(0, -1).map(p => p.value);
-  //   },
-  //   []
-  // );
 
   // 单选时的显示文本
   const displayText = React.useMemo(() => {
@@ -84,29 +90,15 @@ export function Cascader({
       if (state.paths.length === 0) return placeholder;
       return null; // 使用 badges 显示
     } else {
-      if (state.path.length === 0) return placeholder;
-      return state.path.map(item => item.label).join(' / ');
+      return getDisplayText(state.path, placeholder, showAllPaths);
     }
   }, [state.path, state.paths, placeholder, multiple]);
 
   // 生成面板数据
-  const panels = React.useMemo(() => {
-    const result: CascaderOption[][] = [options];
-    const pathToUse = open ? state.hoverPath : state.path;
-
-    let currentOptions = options;
-    for (const item of pathToUse) {
-      // 寻找当前选项的子选项
-      const found = currentOptions.find(opt => opt.value === item.value);
-      if (found?.children && found.children.length > 0) {
-        // 如果当前选项有子选项，则将子选项添加到结果中
-        result.push(found.children);
-        currentOptions = found.children;
-      }
-    }
-
-    return result;
-  }, [options, state.hoverPath, state.path, open]);
+  const panels = React.useMemo(
+    () => generatePanels(options, state.hoverPath, state.path, open),
+    [options, state.hoverPath, state.path, open]
+  );
 
   const indeterminateMap = useIndeterminateMap({
     options,
@@ -116,85 +108,38 @@ export function Cascader({
   });
 
   // 处理多选
-  const handleMultipleSelect = (option: CascaderOption, level: number) => {
+  const handleMultipleSelectClick = (option: CascaderOption, level: number) => {
     if (option.disabled) return;
 
-    const currentPath = [...state.hoverPath.slice(0, level), option];
-    const pathValues = currentPath.map(p => p.value);
-    const optionValue = option.value;
-
-    const newSelectedValues = new Set(state.values);
-    const newSelectedPaths = [...state.paths];
-
-    if (checkStrictly) {
-      // 父子不关联模式
-      if (newSelectedValues.has(optionValue)) {
-        newSelectedValues.delete(optionValue);
-        const pathIndex = newSelectedPaths.findIndex(
-          p => p[p.length - 1] === optionValue
-        );
-        if (pathIndex !== -1) {
-          newSelectedPaths.splice(pathIndex, 1);
-        }
-      } else {
-        newSelectedValues.add(optionValue);
-        newSelectedPaths.push(pathValues);
-      }
-    } else {
-      // 父子关联模式
-      const childValues = collectChildValues(option);
-      const isSelected = newSelectedValues.has(optionValue);
-
-      if (isSelected) {
-        // 取消选中：移除当前节点和所有子节点
-        childValues.forEach(v => newSelectedValues.delete(v));
-        // 移除相关路径
-        const filteredPaths = newSelectedPaths.filter(
-          p => !childValues.includes(p[p.length - 1])
-        );
-        newSelectedPaths.length = 0;
-        newSelectedPaths.push(...filteredPaths);
-      } else {
-        // 选中：添加当前节点和所有子节点
-        childValues.forEach(v => newSelectedValues.add(v));
-        // 添加所有子叶子节点的路径
-        function addLeafPaths(opt: CascaderOption, path: CascaderOption[]) {
-          const currentFullPath = [...path, opt];
-          if (!opt.children || opt.children.length === 0) {
-            newSelectedPaths.push(currentFullPath.map(p => p.value));
-          } else {
-            opt.children.forEach(child => addLeafPaths(child, currentFullPath));
-          }
-        }
-        addLeafPaths(option, currentPath.slice(0, -1));
-      }
-    }
+    const {
+      newSelectedValues,
+      newSelectedPaths,
+      returnValue,
+      selectedOptions,
+    } = handleMultipleSelectUtil({
+      option,
+      level,
+      hoverPath: state.hoverPath,
+      selectedValues: state.values,
+      selectedPaths: state.paths,
+      checkStrictly,
+      emitPath,
+      findOptionPath,
+    });
     dispatch({ type: 'updateValues', payload: newSelectedValues });
     dispatch({ type: 'updatePaths', payload: newSelectedPaths });
-    // 根据 showFullPath 返回不同格式的值
-    const returnValue = showFullPath
-      ? newSelectedPaths
-      : newSelectedPaths.map(path => path[path.length - 1]);
-
-    onChange?.(
-      returnValue,
-      Array.from(newSelectedValues)
-        .map(v => {
-          const path = findOptionPath(v);
-          return path ? path[path.length - 1] : null;
-        })
-        .filter(Boolean) as CascaderOption[]
-    );
+    onChange?.(returnValue, selectedOptions);
   };
 
   // 处理单选
   const handleSelect = (option: CascaderOption, level: number) => {
+    // 更新 hover path
     const newPath = [...state.hoverPath.slice(0, level), option];
 
     if (option.disabled) return;
 
     if (multiple) {
-      handleMultipleSelect(option, level);
+      handleMultipleSelectClick(option, level);
       // 多选模式下如果有子节点，也更新 hover path
       if (option.children && option.children.length > 0) {
         dispatch({ type: 'updateHoverPath', payload: newPath });
@@ -212,7 +157,7 @@ export function Cascader({
         // 可以选择：叶子节点 或 checkStrictly=true 时的任意节点
         dispatch({ type: 'updatePath', payload: newPath });
         const values = newPath.map(item => item.value);
-        const returnValue = showFullPath ? values : values[values.length - 1];
+        const returnValue = emitPath ? values : values[values.length - 1];
         onChange?.(returnValue, newPath[newPath.length - 1]);
         setOpen(false);
         dispatch({ type: 'updateHoverPath', payload: [] });
@@ -223,6 +168,7 @@ export function Cascader({
   // 处理鼠标悬停
   const handleMouseEnter = (option: CascaderOption, level: number) => {
     if (option.disabled) return;
+    // 更新 hover path
     const newPath = [...state.hoverPath.slice(0, level), option];
     dispatch({ type: 'updateHoverPath', payload: newPath });
   };
@@ -241,41 +187,23 @@ export function Cascader({
   };
 
   // 移除单个选中项（多选模式）
-  const handleRemoveTag = (e: React.MouseEvent, pathToRemove: string[]) => {
+  const handleRemoveTagClick = (
+    e: React.MouseEvent,
+    pathToRemove: string[]
+  ) => {
     e.stopPropagation();
-    const valueToRemove = pathToRemove[pathToRemove.length - 1];
-    const newSelectedValues = new Set(state.values);
-    const newSelectedPaths = state.paths.filter(
-      p => p[p.length - 1] !== valueToRemove
-    );
+    const result = handleRemoveTagUtil({
+      pathToRemove,
+      selectedValues: state.values,
+      selectedPaths: state.paths,
+      checkStrictly,
+      emitPath,
+      findOptionPath,
+    });
 
-    if (checkStrictly) {
-      newSelectedValues.delete(valueToRemove);
-    } else {
-      // 父子关联模式，需要移除所有相关的子节点
-      const path = findOptionPath(valueToRemove);
-      if (path) {
-        const option = path[path.length - 1];
-        const childValues = collectChildValues(option);
-        childValues.forEach(v => newSelectedValues.delete(v));
-      }
-    }
-    dispatch({ type: 'updateValues', payload: newSelectedValues });
-    dispatch({ type: 'updatePaths', payload: newSelectedPaths });
-    // 根据 showFullPath 返回不同格式的值
-    const returnValue = showFullPath
-      ? newSelectedPaths
-      : newSelectedPaths.map(path => path[path.length - 1]);
-
-    onChange?.(
-      returnValue,
-      Array.from(newSelectedValues)
-        .map(v => {
-          const path = findOptionPath(v);
-          return path ? path[path.length - 1] : null;
-        })
-        .filter(Boolean) as CascaderOption[]
-    );
+    dispatch({ type: 'updateValues', payload: result.newSelectedValues });
+    dispatch({ type: 'updatePaths', payload: result.newSelectedPaths });
+    onChange?.(result.returnValue, result.selectedOptions);
   };
 
   // 根据 showCheckedStrategy 过滤要显示的路径
@@ -302,40 +230,16 @@ export function Cascader({
   );
 
   // 获取显示的路径标签
-  const pathLabels = React.useMemo(() => {
-    return filteredPaths.map(pathValues => {
-      const labels: string[] = [];
-      let currentOptions = options;
-
-      for (const val of pathValues) {
-        const found = currentOptions.find(opt => opt.value === val);
-        if (found) {
-          labels.push(found.label);
-          currentOptions = found.children || [];
-        }
-      }
-      return {
-        pathValues,
-        label: labels.join(' / '),
-      };
-    });
-  }, [filteredPaths, options]);
+  const pathLabels = React.useMemo(
+    () => getPathLabels(filteredPaths, options, showAllPaths),
+    [filteredPaths, options]
+  );
 
   // 处理标签显示（考虑 maxTagCount）
-  const displayTags = React.useMemo(() => {
-    if (!maxTagCount || pathLabels.length <= maxTagCount) {
-      return {
-        visible: pathLabels,
-        hidden: [],
-        omittedCount: 0,
-      };
-    }
-    return {
-      visible: pathLabels.slice(0, maxTagCount),
-      hidden: pathLabels.slice(maxTagCount),
-      omittedCount: pathLabels.length - maxTagCount,
-    };
-  }, [pathLabels, maxTagCount]);
+  const displayTags = React.useMemo(
+    () => getDisplayTags(pathLabels, maxTagCount),
+    [pathLabels, maxTagCount]
+  );
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -369,7 +273,7 @@ export function Cascader({
                       <div
                         onClick={(e: React.MouseEvent<HTMLDivElement>) => {
                           e.stopPropagation();
-                          handleRemoveTag(e, item.pathValues);
+                          handleRemoveTagClick(e, item.pathValues);
                         }}
                       >
                         <X className="h-3 w-3 cursor-pointer hover:text-destructive" />

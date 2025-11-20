@@ -160,7 +160,7 @@ export default function App() {
   options={options}
   value={value}
   onChange={setValue}
-  showFullPath={true}
+  emitPath={true}
 />
 
 // 只返回最后一个节点：'xihu'
@@ -168,7 +168,7 @@ export default function App() {
   options={options}
   value={value}
   onChange={setValue}
-  showFullPath={false}
+  emitPath={false}
 />
 ```
 
@@ -216,7 +216,7 @@ const optionsWithDisabled = [
 | `showCheckedStrategy` | `'all' \| 'parent' \| 'child'`        | `'all'`       | 多选模式下的选中策略         |
 | `maxTagCount`         | `number`                              | -             | 最多显示的标签数量           |
 | `maxTagPlaceholder`   | `(omittedCount: number) => ReactNode` | -             | 超出标签数量时的占位内容     |
-| `showFullPath`        | `boolean`                             | `true`        | 是否返回完整路径             |
+| `emitPath`        | `boolean`                             | `true`        | 是否返回完整路径             |
 
 ### CascaderOption
 
@@ -233,13 +233,13 @@ interface CascaderOption {
 
 ### 单选模式
 
-**showFullPath = true（默认）**：
+**emitPath = true（默认）**：
 
 ```typescript
 value: string[]  // 例如：['zhejiang', 'hangzhou', 'xihu']
 ```
 
-**showFullPath = false**：
+**emitPath = false**：
 
 ```typescript
 value: string; // 例如：'xihu'
@@ -247,13 +247,13 @@ value: string; // 例如：'xihu'
 
 ### 多选模式
 
-**showFullPath = true（默认）**：
+**emitPath = true（默认）**：
 
 ```typescript
 value: string[][]  // 例如：[['zhejiang', 'hangzhou', 'xihu'], ['jiangsu', 'nanjing', 'xuanwu']]
 ```
 
-**showFullPath = false**：
+**emitPath = false**：
 
 ```typescript
 value: string[]  // 例如：['xihu', 'xuanwu']
@@ -362,7 +362,7 @@ export default function RegionSelector() {
 
 ## 注意事项
 
-1. **value 类型**：确保传入的 `value` 类型与 `multiple` 和 `showFullPath` 设置相匹配
+1. **value 类型**：确保传入的 `value` 类型与 `multiple` 和 `emitPath` 设置相匹配
 2. **性能**：对于大量数据，建议使用虚拟滚动或分页加载
 3. **样式导入**：样式会自动导入，如需单独导入：`import '@lume-ui/cascader/styles.css'`
 
